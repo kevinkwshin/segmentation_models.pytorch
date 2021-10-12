@@ -1,8 +1,11 @@
 from typing import Optional, Union, List
 from .decoder import UnetDecoder
+from .recon_decoder import AE_Decoder
+
 from ..encoders import get_encoder
 from ..base import SegmentationModel
 from ..base import SegmentationHead, ClassificationHead
+from ..base import SegmentationHead, ReconstructionHead
 
 
 class Unet(SegmentationModel):
@@ -59,6 +62,8 @@ class Unet(SegmentationModel):
         classes: int = 1,
         activation: Optional[Union[str, callable]] = None,
         aux_params: Optional[dict] = None,
+        rec_params: Optional[dict] = None,
+        
     ):
         super().__init__()
 
@@ -91,6 +96,27 @@ class Unet(SegmentationModel):
             )
         else:
             self.classification_head = None
+        
+        if rec_params is not None:
+            # Recon
+            self.recon_decoder = AE_Decoder(
+                encoder_channels=self.encoder.out_channels,
+                decoder_channels=decoder_channels,
+                n_blocks=encoder_depth,
+                use_batchnorm=decoder_use_batchnorm,
+                center=True if encoder_name.startswith("vgg") else False,
+                attention_type=decoder_attention_type, **aux_params
+            )
 
+            self.recon_head = ReconstructionHead(
+                in_channels=decoder_channels[-1]//2,
+                out_channels=1,
+                activation=activation,
+                kernel_size=3, **aux_params
+            )
+           
+        else:
+            self.recon_head = None
+        
         self.name = "u-{}".format(encoder_name)
         self.initialize()
