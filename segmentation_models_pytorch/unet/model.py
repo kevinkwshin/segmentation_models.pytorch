@@ -62,7 +62,7 @@ class Unet(SegmentationModel):
         classes: int = 1,
         activation: Optional[Union[str, callable]] = None,
         aux_params: Optional[dict] = None,
-        rec_params: Optional[dict] = None,
+        recon = True,
         
     ):
         super().__init__()
@@ -97,7 +97,7 @@ class Unet(SegmentationModel):
         else:
             self.classification_head = None
         
-        if rec_params is not None:
+        if recon == True :
             # Recon
             self.recon_decoder = AE_Decoder(
                 encoder_channels=self.encoder.out_channels,
